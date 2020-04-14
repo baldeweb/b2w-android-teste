@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Route Me</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="map_content_map_wish_go_to">Desejo ir para…</string>
+</resources>
