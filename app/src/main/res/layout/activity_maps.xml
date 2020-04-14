@@ -15,29 +15,52 @@
         map:layout_constraintStart_toStartOf="parent"
         map:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/tvwSearchLocation"
-        android:layout_width="0dp"
-        android:onClick="onSearchLocation"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/margin_normal"
+        android:translationZ="1dp"
+        android:background="@color/colorAccentTranslucid"
         map:layout_constraintEnd_toEndOf="parent"
         map:layout_constraintStart_toStartOf="parent"
-        map:layout_constraintTop_toTopOf="parent"
-        android:text="@string/map_content_map_wish_go_to"
-        android:layout_margin="@dimen/margin_small"
-        android:gravity="center_vertical"
-        android:drawableStart="@android:drawable/ic_search_category_default"
-        android:padding="@dimen/margin_small"
-        android:layout_height="wrap_content" />
+        map:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/imvLogo"
+            android:layout_width="48dp"
+            android:src="@drawable/b2w_logo"
+            android:alpha="0.7"
+            map:layout_constraintStart_toStartOf="parent"
+            map:layout_constraintTop_toTopOf="@id/tvwSearchLocation"
+            map:layout_constraintBottom_toBottomOf="@id/tvwSearchLocation"
+            android:layout_height="48dp" />
+
+        <TextView
+            android:id="@+id/tvwSearchLocation"
+            android:layout_width="0dp"
+            android:background="@drawable/bg_search_field"
+            android:padding="@dimen/margin_small"
+            android:layout_height="wrap_content"
+            android:drawableEnd="@drawable/ic_search"
+            android:gravity="center_vertical"
+            android:textSize="16sp"
+            android:onClick="onSearchLocation"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginStart="@dimen/margin_small"
+            android:text="@string/map_content_map_wish_go_to"
+            map:layout_constraintEnd_toEndOf="parent"
+            map:layout_constraintStart_toEndOf="@+id/imvLogo"
+            map:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="@dimen/margin_small"
         map:layout_constraintBottom_toBottomOf="parent"
         map:layout_constraintEnd_toEndOf="parent"
         map:layout_constraintStart_toStartOf="parent"
-        map:layout_constraintTop_toBottomOf="@+id/tvwSearchLocation"
+        map:layout_constraintTop_toTopOf="parent"
         tools:context=".MapsActivity" />
 </androidx.constraintlayout.widget.ConstraintLayout>

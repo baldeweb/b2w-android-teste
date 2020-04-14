@@ -4,6 +4,8 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
@@ -11,45 +13,52 @@ import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.google.android.gms.common.api.Status
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
+import com.b2w.routeme.viewmodel.MapsViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.*
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.AutocompleteActivity
-import com.google.android.libraries.places.widget.AutocompleteSupportFragment
-import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.google.maps.DirectionsApi
 import com.google.maps.DirectionsApiRequest
 import com.google.maps.GeoApiContext
-import com.google.maps.model.*
+import kotlinx.android.synthetic.main.activity_maps.*
 import java.util.*
 import kotlin.collections.ArrayList
 
-
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
+
+    private val viewModel: MapsViewModel by lazy { MapsViewModel(application) }
 
     private lateinit var mMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val REQUEST_PERMISSION_LOCATION = 101
     private val AUTOCOMPLETE_REQUEST_CODE = 1
     private var mLocation: Location? = null
-    private var latitudeFromAutocomplete : Double = 0.0
-    private var longitudeFromAutocomplete : Double = 0.0
+    private var latitudeFromAutocomplete: Double = 0.0
+    private var longitudeFromAutocomplete: Double = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         initialSetupMap()
+        initObservers()
+    }
+
+    private fun initObservers() {
+        viewModel.addressName.observe(this, Observer<String> {
+            tvwSearchLocation.text = it
+        })
     }
 
     private fun initialSetupMap() {
@@ -57,12 +66,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         if (!Places.isInitialized())
-            Places.initialize(applicationContext, getString(R.string.google_maps_key), Locale.getDefault());
+            Places.initialize(
+                applicationContext,
+                getString(R.string.google_maps_key),
+                Locale.getDefault()
+            );
     }
 
     private fun setupAutoCompletePlaces() {
-        val fields= listOf(Place.Field.ID,Place.Field.NAME,Place.Field.LAT_LNG)
-        val intent = Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fields).build(this)
+        val fields = listOf(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG)
+        val intent =
+            Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fields).build(this)
         startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE)
     }
 
@@ -72,12 +86,30 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         getCurrentPosition()
     }
 
+    private fun bitmapDescriptorFromVector(vectorResId: Int): BitmapDescriptor? {
+        val vectorDrawable = ContextCompat.getDrawable(this, vectorResId)
+        vectorDrawable!!.setBounds(
+            0,
+            0,
+            vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight
+        )
+        val bitmap = Bitmap.createBitmap(
+            vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight,
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bitmap)
+        vectorDrawable.draw(canvas)
+        return BitmapDescriptorFactory.fromBitmap(bitmap)
+    }
+
     private fun setupDrawRoute(latLng: Location) {
         val currentLocation = LatLng(latLng.latitude, latLng.longitude)
-        mMap.addMarker(MarkerOptions().position(currentLocation))
+        mMap.addMarker(MarkerOptions().position(currentLocation).icon(bitmapDescriptorFromVector(R.drawable.ic_pin_current_location)))
 
         val targetLocation = LatLng(latitudeFromAutocomplete, longitudeFromAutocomplete)
-        mMap.addMarker(MarkerOptions().position(targetLocation))
+        mMap.addMarker(MarkerOptions().position(targetLocation).icon(bitmapDescriptorFromVector(R.drawable.ic_pin_target_destination)))
 
         val path: MutableList<LatLng> = ArrayList()
 
@@ -92,45 +124,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 "$latitudeFromAutocomplete,$longitudeFromAutocomplete"
             )
 
-        try {
-            val res: DirectionsResult = req.await()
-            if (res.routes != null && res.routes.isNotEmpty()) {
-                val route: DirectionsRoute = res.routes.get(0)
-                if (route.legs != null) {
-                    for (i in route.legs.indices) {
-                        val leg: DirectionsLeg = route.legs.get(i)
-                        if (leg.steps != null) {
-                            for (j in leg.steps.indices) {
-                                val step: DirectionsStep = leg.steps.get(j)
-                                if (step.steps != null && step.steps.isNotEmpty()) {
-                                    for (k in step.steps.indices) {
-                                        val step1: DirectionsStep = step.steps.get(k)
-                                        val points1: EncodedPolyline = step1.polyline
-                                        val coords1 = points1.decodePath()
-                                        for (coord1 in coords1) {
-                                            path.add(LatLng(coord1.lat, coord1.lng))
-                                        }
-                                    }
-                                } else {
-                                    val points: EncodedPolyline = step.polyline
-                                    val coords = points.decodePath()
-                                    for (coord in coords) {
-                                        path.add(LatLng(coord.lat, coord.lng))
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (ex: java.lang.Exception) {
-            Log.e("LOG", ex.localizedMessage ?: "")
-        }
-
-        if (path.size > 0) {
-            val opts = PolylineOptions().addAll(path).color(Color.BLUE).width(5f)
-            mMap.addPolyline(opts)
-        }
+        viewModel.setupLocation(req, path, mMap)
 
         mMap.uiSettings.isZoomControlsEnabled = true
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 16F))
@@ -183,6 +177,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 longitudeFromAutocomplete = place?.latLng?.longitude ?: 0.0
 
                 mMap.clear()
+                viewModel.setAddressName(place?.name ?: "")
                 getCurrentPosition()
             } else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
                 val status = data?.let { Autocomplete.getStatusFromIntent(it) }
@@ -199,7 +194,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             REQUEST_PERMISSION_LOCATION -> {
-                // If request is cancelled, the result arrays are empty.
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
 
                 } else {
