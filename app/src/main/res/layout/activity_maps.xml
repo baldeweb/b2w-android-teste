@@ -5,17 +5,29 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+    <fragment
         android:id="@+id/atvMapSearchLocation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:padding="@dimen/padding_xsmall"
-        android:layout_margin="@dimen/margin_small"
-        android:background="@null"
-        android:hint="@string/map_content_map_wish_go_to"
         map:layout_constraintEnd_toEndOf="parent"
         map:layout_constraintStart_toStartOf="parent"
         map:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvwSearchLocation"
+        android:layout_width="0dp"
+        android:onClick="onSearchLocation"
+        map:layout_constraintEnd_toEndOf="parent"
+        map:layout_constraintStart_toStartOf="parent"
+        map:layout_constraintTop_toTopOf="parent"
+        android:text="@string/map_content_map_wish_go_to"
+        android:layout_margin="@dimen/margin_small"
+        android:gravity="center_vertical"
+        android:drawableStart="@android:drawable/ic_search_category_default"
+        android:padding="@dimen/margin_small"
+        android:layout_height="wrap_content" />
 
     <fragment
         android:id="@+id/map"
@@ -26,6 +38,6 @@
         map:layout_constraintBottom_toBottomOf="parent"
         map:layout_constraintEnd_toEndOf="parent"
         map:layout_constraintStart_toStartOf="parent"
-        map:layout_constraintTop_toBottomOf="@+id/atvMapSearchLocation"
+        map:layout_constraintTop_toBottomOf="@+id/tvwSearchLocation"
         tools:context=".MapsActivity" />
 </androidx.constraintlayout.widget.ConstraintLayout>
