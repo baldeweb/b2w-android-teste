@@ -2,4 +2,8 @@
     <string name="app_name">Route Me</string>
     <string name="title_activity_maps">Route Me</string>
     <string name="map_content_map_wish_go_to">Desejo ir para…</string>
+    <string name="maps_alert_title_permission">Permissão de localização</string>
+    <string name="maps_alert_message_permission">Ao negar a permissão, você impede que este aplicativo funcione corretamente. Permitir localização?</string>
+    <string name="maps_alert_positive_button_message_permission">Sim, permitir</string>
+    <string name="maps_alert_negative_button_message_permission">Negar</string>
 </resources>

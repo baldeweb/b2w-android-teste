@@ -2,14 +2,13 @@ package com.b2w.routeme
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -22,8 +21,10 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.Autocomplete
@@ -34,7 +35,6 @@ import com.google.maps.DirectionsApiRequest
 import com.google.maps.GeoApiContext
 import kotlinx.android.synthetic.main.activity_maps.*
 import java.util.*
-import kotlin.collections.ArrayList
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -51,6 +51,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
+    }
+
+    override fun onStart() {
+        super.onStart()
+
         initialSetupMap()
         initObservers()
     }
@@ -62,8 +67,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun initialSetupMap() {
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+        (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync(this)
 
         if (!Places.isInitialized())
             Places.initialize(
@@ -111,8 +115,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val targetLocation = LatLng(latitudeFromAutocomplete, longitudeFromAutocomplete)
         mMap.addMarker(MarkerOptions().position(targetLocation).icon(bitmapDescriptorFromVector(R.drawable.ic_pin_target_destination)))
 
-        val path: MutableList<LatLng> = ArrayList()
-
         val context = GeoApiContext.Builder()
             .apiKey(getString(R.string.google_maps_key))
             .build()
@@ -124,7 +126,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 "$latitudeFromAutocomplete,$longitudeFromAutocomplete"
             )
 
-        viewModel.setupLocation(req, path, mMap)
+        viewModel.setupLocation(req, mMap)
 
         mMap.uiSettings.isZoomControlsEnabled = true
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 16F))
@@ -135,36 +137,43 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(
                     this,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
+                    Manifest.permission.ACCESS_FINE_LOCATION
                 )
             ) {
-                fusedLocationClient.lastLocation
-                    .addOnSuccessListener { location: Location? ->
-                        mLocation = location!!
-                        setupDrawRoute(location)
-                    }
+                alertPermission()
             } else {
                 ActivityCompat.requestPermissions(
                     this,
-                    arrayOf(Manifest.permission.READ_CONTACTS),
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                     REQUEST_PERMISSION_LOCATION
                 )
             }
         } else {
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    mLocation = location!!
-                    setupDrawRoute(location)
-                }
+            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                mLocation = location!!
+                setupDrawRoute(location)
+            }
         }
+    }
+
+    private fun alertPermission() {
+        val alertDialog = AlertDialog.Builder(this)
+        alertDialog.setTitle(getString(R.string.maps_alert_title_permission))
+        alertDialog.setMessage(getString(R.string.maps_alert_message_permission))
+        alertDialog.setPositiveButton(getString(R.string.maps_alert_positive_button_message_permission)) { _, _ ->
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUEST_PERMISSION_LOCATION
+            )
+        }
+        alertDialog.setNegativeButton(getString(R.string.maps_alert_negative_button_message_permission)) { _, _ -> }
+        alertDialog.create()
+        alertDialog.show()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -180,8 +189,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 viewModel.setAddressName(place?.name ?: "")
                 getCurrentPosition()
             } else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
-                val status = data?.let { Autocomplete.getStatusFromIntent(it) }
-                Log.d("LOG", status?.statusMessage ?: "");
+                return
             }
         }
     }
@@ -194,10 +202,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             REQUEST_PERMISSION_LOCATION -> {
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-
-                } else {
-                }
+                getCurrentPosition()
             }
         }
     }

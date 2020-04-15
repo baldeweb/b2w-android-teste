@@ -20,9 +20,10 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setupLocation(
         req: DirectionsApiRequest,
-        path: MutableList<LatLng>,
         mMap: GoogleMap
     ) {
+        val pathRoute: MutableList<LatLng> = ArrayList()
+
         try {
             val res: DirectionsResult = req.await()
             if (res.routes != null && res.routes.isNotEmpty()) {
@@ -39,14 +40,14 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
                                         val points1: EncodedPolyline = step1.polyline
                                         val coords1 = points1.decodePath()
                                         for (coord1 in coords1) {
-                                            path.add(LatLng(coord1.lat, coord1.lng))
+                                            pathRoute.add(LatLng(coord1.lat, coord1.lng))
                                         }
                                     }
                                 } else {
                                     val points: EncodedPolyline = step.polyline
                                     val coords = points.decodePath()
                                     for (coord in coords) {
-                                        path.add(LatLng(coord.lat, coord.lng))
+                                        pathRoute.add(LatLng(coord.lat, coord.lng))
                                     }
                                 }
                             }
@@ -58,9 +59,10 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
             Log.e("LOG", ex.localizedMessage ?: "")
         }
 
-        if (path.size > 0) {
-            val opts = PolylineOptions().addAll(path).color(Color.GRAY).width(5f)
+        if (pathRoute.size > 0) {
+            val opts = PolylineOptions().addAll(pathRoute).color(Color.GRAY).width(5f)
             mMap.addPolyline(opts)
         }
     }
+
 }
