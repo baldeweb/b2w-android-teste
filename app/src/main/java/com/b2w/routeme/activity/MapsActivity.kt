@@ -1,4 +1,4 @@
-package com.b2w.routeme
+package com.b2w.routeme.activity
 
 import android.Manifest
 import android.app.Activity
@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
+import com.b2w.routeme.R
 import com.b2w.routeme.viewmodel.MapsViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -110,10 +111,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun setupDrawRoute(latLng: Location) {
         val currentLocation = LatLng(latLng.latitude, latLng.longitude)
-        mMap.addMarker(MarkerOptions().position(currentLocation).icon(bitmapDescriptorFromVector(R.drawable.ic_pin_current_location)))
+        mMap.addMarker(MarkerOptions().position(currentLocation).icon(bitmapDescriptorFromVector(
+            R.drawable.ic_pin_current_location
+        )))
 
         val targetLocation = LatLng(latitudeFromAutocomplete, longitudeFromAutocomplete)
-        mMap.addMarker(MarkerOptions().position(targetLocation).icon(bitmapDescriptorFromVector(R.drawable.ic_pin_target_destination)))
+        mMap.addMarker(MarkerOptions().position(targetLocation).icon(bitmapDescriptorFromVector(
+            R.drawable.ic_pin_target_destination
+        )))
 
         val context = GeoApiContext.Builder()
             .apiKey(getString(R.string.google_maps_key))
