@@ -215,5 +215,4 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     fun onSearchLocation(v: View) {
         setupAutoCompletePlaces()
     }
-
 }
