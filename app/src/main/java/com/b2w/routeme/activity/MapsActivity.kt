@@ -159,8 +159,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         } else {
             fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                mLocation = location!!
-                setupDrawRoute(location)
+                mLocation = location
+                location?.let { setupDrawRoute(it) }
             }
         }
     }
@@ -206,9 +206,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
-            REQUEST_PERMISSION_LOCATION -> {
-                getCurrentPosition()
-            }
+            REQUEST_PERMISSION_LOCATION -> getCurrentPosition()
         }
     }
 
