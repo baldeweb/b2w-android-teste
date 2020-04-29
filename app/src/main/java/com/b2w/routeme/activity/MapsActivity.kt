@@ -17,6 +17,8 @@ import androidx.lifecycle.Observer
 import com.b2w.routeme.R
 import com.b2w.routeme.viewmodel.MapsViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -43,6 +45,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var locationCallback: LocationCallback
     private val REQUEST_PERMISSION_LOCATION = 101
     private val AUTOCOMPLETE_REQUEST_CODE = 1
     private var mLocation: Location? = null
@@ -59,6 +62,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         initialSetupMap()
         initObservers()
+        getCurrentPositionAndroidQ()
+    }
+
+    private fun getCurrentPositionAndroidQ() {
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                (locationResult ?: return).locations.forEach {
+                    setupDrawRoute(it)
+                }
+            }
+        }
     }
 
     private fun initObservers() {
@@ -111,14 +125,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun setupDrawRoute(latLng: Location) {
         val currentLocation = LatLng(latLng.latitude, latLng.longitude)
-        mMap.addMarker(MarkerOptions().position(currentLocation).icon(bitmapDescriptorFromVector(
-            R.drawable.ic_pin_current_location
-        )))
+        mMap.addMarker(
+            MarkerOptions().position(currentLocation).icon(
+                bitmapDescriptorFromVector(
+                    R.drawable.ic_pin_current_location
+                )
+            )
+        )
 
         val targetLocation = LatLng(latitudeFromAutocomplete, longitudeFromAutocomplete)
-        mMap.addMarker(MarkerOptions().position(targetLocation).icon(bitmapDescriptorFromVector(
-            R.drawable.ic_pin_target_destination
-        )))
+        mMap.addMarker(
+            MarkerOptions().position(targetLocation).icon(
+                bitmapDescriptorFromVector(
+                    R.drawable.ic_pin_target_destination
+                )
+            )
+        )
 
         val context = GeoApiContext.Builder()
             .apiKey(getString(R.string.google_maps_key))
@@ -139,21 +161,30 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun getCurrentPosition() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        if (ActivityCompat.checkSelfPermission(
+        if ((ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+            ) != PackageManager.PERMISSION_GRANTED) || (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED)
         ) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
+            if ((ActivityCompat.shouldShowRequestPermissionRationale(
                     this,
                     Manifest.permission.ACCESS_FINE_LOCATION
-                )
+                )) || (ActivityCompat.shouldShowRequestPermissionRationale(
+                    this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ))
             ) {
                 alertPermission()
             } else {
                 ActivityCompat.requestPermissions(
                     this,
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ),
                     REQUEST_PERMISSION_LOCATION
                 )
             }
@@ -172,7 +203,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         alertDialog.setPositiveButton(getString(R.string.maps_alert_positive_button_message_permission)) { _, _ ->
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
                 REQUEST_PERMISSION_LOCATION
             )
         }

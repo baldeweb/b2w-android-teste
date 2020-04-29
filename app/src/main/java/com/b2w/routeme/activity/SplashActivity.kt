@@ -16,6 +16,7 @@ class SplashActivity : AppCompatActivity() {
             finish()
             startActivity(Intent(this, MapsActivity::class.java))
         }, 1200)
+
     }
 
 }
